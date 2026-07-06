@@ -25,6 +25,10 @@ impl Bands {
         self.centers.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.centers.is_empty()
+    }
+
     /// Return the range of FFT bin indices (exclusive end) that fall within band `i`.
     /// `fft_size` is the full FFT length; `sample_rate` is in Hz.
     pub fn bin_range(&self, i: usize, fft_size: usize, sample_rate: u32) -> (usize, usize) {

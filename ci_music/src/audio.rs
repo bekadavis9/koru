@@ -140,11 +140,7 @@ mod audio_tests {
             channels,
             sample_rate: sr,
             bits_per_sample: bits,
-            sample_format: if bits == 32 && samples.iter().any(|s| s.fract() != 0.0) {
-                SampleFormat::Float
-            } else {
-                SampleFormat::Float // always f32 for simplicity in test helpers
-            },
+            sample_format: SampleFormat::Float, // always f32 for simplicity in test helpers
         };
         let mut cursor = std::io::Cursor::new(Vec::new());
         let mut writer = WavWriter::new(&mut cursor, spec).unwrap();

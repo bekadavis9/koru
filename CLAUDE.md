@@ -50,3 +50,5 @@ Primary pipeline (CIS/FS4): load audio → downmix mono → 4th-order IIR bandpa
 Crates: `hound` + `rustfft` (all targets), `symphonia` + `clap` + `axum` + `tokio` (native only), `wasm-bindgen` (WASM only).
 
 Source layout: `lib.rs` (library root + WASM entry point), `main.rs` (`process`/`serve` subcommands), `server.rs` (axum routes + `POST /simulate`), `index.html` (local server UI), `audio.rs` (Symphonia decode, native only), `vocoder.rs` (all three strategies + WAV encode), `filter.rs` (biquad IIR), `bands.rs` (log-spaced frequencies). GitHub Pages source: `web/index.html`.
+
+Sample audio for local testing is not checked into the repo (see `.gitignore` — `ci_music/.gitignore` excludes `src/input/` and `src/output/`). Use your own WAV/MP3 files for manual testing.
