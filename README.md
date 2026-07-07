@@ -8,6 +8,10 @@ A Rust channel vocoder that simulates how cochlear implant (CI) users perceive m
 
 Cochlear implants work by mapping sound to a small number of electrode channels implanted in the cochlea, which is why music — rich in pitch and harmonic detail — is so much harder for CI users than speech. I first explored this idea as a freshman research project: I led a team studying how cochlear implant users have limited musical perception, and built a rough prototype of the CI listening experience as our deliverable. This version began during a week-long AI-assisted-development hackathon at my former employer, built with [Claude Code](https://claude.ai/code) — I've maintained and extended it on my own time since. See `CLAUDE.md` for the architecture notes I use when working on it with Claude Code, and `ci_music/planning/conversation.md` for the original design conversation.
 
+## About the name
+
+Koru is the spiral shape of an unfurling silver fern frond, a symbol in [Māori culture](https://en.wikipedia.org/wiki/Koru) (Aotearoa New Zealand) representing new life, growth, and change. It also happens to echo the spiral shape of the cochlea itself — fitting for a project about experiencing music through a new lens.
+
 ## Background
 
 Modern CI devices typically use 8–22 electrode channels covering roughly 70–8,500 Hz. This channel limitation is what makes music so difficult for CI users: pitch, harmonics, and timbre are largely lost, while rhythm and loudness contour survive. This tool makes that experience audible. See `sources/` for the audiology literature behind it.
