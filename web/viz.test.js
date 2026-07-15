@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { F_LOW, F_HIGH, bandFreqs, bandColor, fmtHz, bandBinRange, bandEnergy } from './viz.js';
+import { F_LOW, F_HIGH, bandFreqs, bandColor, fmtHz, bandBinRange, bandEnergy, litThreshold, ANALYSER_FFT_SIZE } from './viz.js';
 
 // ── bandFreqs ──────────────────────────────────────────────────────────────
 
@@ -51,7 +51,7 @@ describe('bandFreqs', () => {
 
 describe('bandBinRange', () => {
   const NYQUIST    = 22050; // 44100 Hz sample rate
-  const BIN_COUNT  = 1024;
+  const BIN_COUNT  = 1024;  // arbitrary illustrative value, not the app's actual config (see ANALYSER_FFT_SIZE below)
 
   test('loIdx <= hiIdx for every CI band at 44100 Hz', () => {
     for (let n of [4, 12, 24]) {
@@ -83,6 +83,26 @@ describe('bandBinRange', () => {
     const [lo1, hi1] = bandBinRange(500,  1000, NYQUIST, BIN_COUNT);
     const [lo2, hi2] = bandBinRange(2000, 4000, NYQUIST, BIN_COUNT);
     assert.ok(lo2 > lo1 && hi2 > hi1);
+  });
+
+  // Regression test for the "bottom half always lit" bug: at the app's real
+  // fftSize, adjacent low bands must mostly resolve to distinct bins rather
+  // than collapsing onto the same one or two bins (which made ~20 visually
+  // separate bands actually echo the same couple of FFT readings). A smaller
+  // fftSize (e.g. the old 2048) fails this — most low-band pairs come back
+  // fully duplicate.
+  test('low bands are mostly non-duplicate at the real fftSize (44.1kHz)', () => {
+    const binCount = ANALYSER_FFT_SIZE / 2;
+    const n = 48;
+    let duplicates = 0;
+    let prevRange = null;
+    for (let i = 0; i < 24; i++) {
+      const [lo, hi] = bandFreqs(i, n);
+      const range = bandBinRange(lo, hi, NYQUIST, binCount);
+      if (prevRange && prevRange[0] === range[0] && prevRange[1] === range[1]) duplicates++;
+      prevRange = range;
+    }
+    assert.ok(duplicates <= 1, `expected at most 1 fully-duplicate adjacent pair among bottom 24 bands, got ${duplicates}`);
   });
 });
 
@@ -121,14 +141,40 @@ describe('bandEnergy', () => {
     assert.equal(bandEnergy(data, 1, 10), 255 * 9 / 10);
   });
 
-  test('above-threshold energy (>20) from a loud band', () => {
+  test('high energy from a loud band', () => {
     const data = new Uint8Array(1024).fill(100);
-    assert.ok(bandEnergy(data, 0, 100) > 20);
+    assert.ok(bandEnergy(data, 0, 100) > 50);
   });
 
-  test('below-threshold energy from silence', () => {
+  test('zero energy from silence', () => {
     const data = new Uint8Array(1024); // all zeros
-    assert.ok(bandEnergy(data, 0, 100) <= 20);
+    assert.equal(bandEnergy(data, 0, 100), 0);
+  });
+});
+
+// ── litThreshold ───────────────────────────────────────────────────────────
+
+describe('litThreshold', () => {
+  test('silence returns the noise floor (24)', () => {
+    const data = new Uint8Array(1024); // all zeros
+    assert.equal(litThreshold(data), 24);
+  });
+
+  test('a quiet peak still floors at 24, not below', () => {
+    const data = new Uint8Array(1024).fill(30); // peak=30, 30*0.22=6.6 < floor
+    assert.equal(litThreshold(data), 24);
+  });
+
+  test('scales with the frame\'s peak bin, not a fixed value', () => {
+    const quiet = new Uint8Array(1024).fill(80);  // peak=80  -> 17.6, floors to 24
+    const loud  = new Uint8Array(1024).fill(200); // peak=200 -> 44
+    assert.ok(litThreshold(loud) > litThreshold(quiet));
+  });
+
+  test('only the single loudest bin sets the threshold', () => {
+    const data = new Uint8Array(1024); // rest silent
+    data[500] = 220;
+    assert.equal(litThreshold(data), Math.max(24, 220 * 0.22));
   });
 });
 

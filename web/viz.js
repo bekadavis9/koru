@@ -4,6 +4,12 @@
 export const F_LOW  = 70;
 export const F_HIGH = 8500;
 
+// AnalyserNode.fftSize used for the live playback visualization. 16384 gives
+// ~2.7 Hz/bin at 44.1kHz — needed so adjacent low-end log bands (as narrow as
+// ~7 Hz below 200 Hz) resolve to mostly-distinct bins instead of collapsing
+// onto the same one or two bins and lighting up together as a single block.
+export const ANALYSER_FFT_SIZE = 16384;
+
 /** Log-spaced [lo, hi] Hz for band i of n. */
 export function bandFreqs(i, n) {
   const lo = F_HIGH * Math.pow(F_LOW / F_HIGH, (n - i)     / n);
@@ -47,4 +53,18 @@ export function bandEnergy(freqData, loIdx, hiIdx) {
   let sum = 0;
   for (let k = loIdx; k <= hiIdx; k++) sum += freqData[k];
   return sum / Math.max(1, hiIdx - loIdx + 1);
+}
+
+/**
+ * Energy level (out of 255) a band must exceed to be drawn as "lit", relative
+ * to this frame's loudest bin rather than a fixed dB floor — a fixed floor
+ * sits barely above the analyser's noise floor, so it reads as lit almost
+ * continuously regardless of what's actually playing. The 24 floor still
+ * suppresses near-silence (quiet peak shouldn't make everything look "lit").
+ * @param {Uint8Array} freqData
+ */
+export function litThreshold(freqData) {
+  let peak = 0;
+  for (let k = 0; k < freqData.length; k++) if (freqData[k] > peak) peak = freqData[k];
+  return Math.max(24, peak * 0.22);
 }

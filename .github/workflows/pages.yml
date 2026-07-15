@@ -47,6 +47,7 @@ jobs:
         run: |
           cp web/index.html _site/index.html
           cp web/viz.js _site/viz.js
+          cp -r web/samples _site/samples
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

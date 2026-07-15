@@ -49,7 +49,7 @@ cargo run -- serve          # http://localhost:3000
 cargo run -- serve -p 3001
 ```
 
-Upload a WAV, MP3, FLAC, or OGG file, adjust channels and strategy, and compare original vs. simulated audio in the browser.
+Upload a WAV, MP3, FLAC, or OGG file, adjust channels and strategy, and compare original vs. simulated audio in the browser. The GitHub Pages build also offers two bundled sample clips — a lyrical passage and a rhythmically driven one — so visitors without an audio file handy can still try it. See `web/samples/` for licensing.
 
 ## Algorithm
 
@@ -99,6 +99,7 @@ ci_music/           Rust crate — CLI + native web server + WASM entry point
   demo.html         Standalone slide deck used for the hackathon demo
   planning/         Original design conversation
 web/                GitHub Pages UI (WASM build target)
+  samples/          Bundled public-domain sample clips (see samples/README.md)
 sources/            Audiology literature referenced above
 ```
 

@@ -57,6 +57,12 @@
     #cochleaSvg polyline { transition: stroke 0.12s ease; }
     .freq-bar-labels { display: flex; justify-content: space-between; margin-top: 6px; }
     .freq-bar-labels span { font-size: 0.7rem; color: #8b949e; }
+
+    /* Narrow viewports: 9 tick labels collide, so thin them to every other one. */
+    @media (max-width: 500px) {
+      .freq-tick-lbl { font-size: 0.56rem; }
+      .freq-tick-lbl:nth-child(even) { display: none; }
+    }
     .cochlea-explainer {
       font-size: 0.82rem; color: #8b949e; line-height: 1.6;
       max-width: 500px; margin: 0 auto 20px;
@@ -81,6 +87,24 @@
     .drop-zone.over { border-color: #58a6ff; background: rgba(88,166,255,0.08); }
     .dz-icon { font-size: 1.8rem; margin-bottom: 8px; }
     .dz-hint { color: #8b949e; font-size: 0.85rem; }
+    .dz-samples {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 8px; margin-top: 14px; cursor: default;
+    }
+    .dz-samples-label { color: #6e7681; font-size: 0.72rem; }
+    .dz-sample-btn {
+      font-size: 0.75rem; color: #8b949e; background: none;
+      border: 1px solid #30363d; border-radius: 6px; padding: 4px 10px;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .dz-sample-btn em { font-style: normal; color: #6e7681; }
+    .dz-sample-btn:hover { border-color: #58a6ff; color: #e6edf3; }
+    .dz-sample-btn.active {
+      border-color: #58a6ff; color: #79b8ff; background: rgba(88,166,255,0.08);
+    }
+    .dz-sample-btn.active em { color: #58a6ff; }
+    .dz-samples-compact { justify-content: flex-end; margin-top: 8px; }
     .dz-loading {
       display: none; align-items: center; justify-content: center;
       gap: 12px; min-height: 60px; color: #8b949e; font-size: 0.88rem;
@@ -330,6 +354,11 @@
         <div id="dzEmpty">
           <div class="dz-icon">🎵</div>
           <div class="dz-hint">Drop an audio file here, or click to browse</div>
+          <div class="dz-samples" onclick="event.stopPropagation()">
+            <span class="dz-samples-label">or try a sample</span>
+            <button class="dz-sample-btn" data-sample="andante" onclick="loadSample('samples/schubert-andante.mp3', 'schubert-andante.mp3', 'andante')">Schubert — Andante <em>(melodic)</em></button>
+            <button class="dz-sample-btn" data-sample="allegro" onclick="loadSample('samples/schubert-allegro.mp3', 'schubert-allegro.mp3', 'allegro')">Schubert — Allegro vivace <em>(rhythmic)</em></button>
+          </div>
         </div>
         <div class="dz-loading" id="dzLoading">
           <div class="sim-spinner"></div>
@@ -347,6 +376,11 @@
           <div class="dz-actions">
             <button class="dz-action-btn" onclick="document.getElementById('fileInput').click()">Change file</button>
             <button id="dlBtn" class="dz-action-btn">↓ Download</button>
+          </div>
+          <div class="dz-samples dz-samples-compact">
+            <span class="dz-samples-label">try a sample</span>
+            <button class="dz-sample-btn" data-sample="andante" onclick="loadSample('samples/schubert-andante.mp3', 'schubert-andante.mp3', 'andante')">Andante <em>(melodic)</em></button>
+            <button class="dz-sample-btn" data-sample="allegro" onclick="loadSample('samples/schubert-allegro.mp3', 'schubert-allegro.mp3', 'allegro')">Allegro vivace <em>(rhythmic)</em></button>
           </div>
         </div>
       </div>
@@ -373,7 +407,7 @@
 </div>
 <script type="module">
   import init, { process_audio } from './pkg/ci_music.js';
-  import { F_LOW, F_HIGH, bandFreqs, bandColor, fmtHz, bandBinRange, bandEnergy } from './viz.js';
+  import { F_LOW, F_HIGH, bandFreqs, bandColor, fmtHz, bandBinRange, bandEnergy, litThreshold, ANALYSER_FFT_SIZE } from './viz.js';
 
   // ── WASM initialisation ───────────────────────────────────────────────────
   // Start loading WASM immediately; doSimulate awaits this before processing.
@@ -412,6 +446,7 @@
   let channels  = 4;
   let strategy  = 'cis';
   let abMode    = 'sim';
+  let currentSample = null;
   let origSrc   = null;
   let simSrc    = null;
   let simReady  = false;
@@ -431,7 +466,7 @@
     if (analyser) return;
     const src = audioCtx.createMediaElementSource(playerEl);
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 2048;
+    analyser.fftSize = ANALYSER_FFT_SIZE;
     analyser.smoothingTimeConstant = 0.8;
     src.connect(analyser);
     analyser.connect(audioCtx.destination);
@@ -448,12 +483,15 @@
       if (!n) return;
       analyser.getByteFrequencyData(freqData);
       const nyquist = audioCtx.sampleRate / 2;
+
+      const threshold = litThreshold(freqData);
+
       for (let i = 0; i < n; i++) {
         if (!bandReachable[i]) continue;
         const [lo, hi] = bandFreqs(i, n);
         const [loIdx, hiIdx] = bandBinRange(lo, hi, nyquist, freqData.length);
         const avg = bandEnergy(freqData, loIdx, hiIdx);
-        const color = avg > 20 ? bandColor(i, n) : '#2d3748';
+        const color = avg > threshold ? bandColor(i, n) : '#2d3748';
         if (bandPolylines[i]) bandPolylines[i].style.stroke = color;
         if (bandBarSegs[i])   bandBarSegs[i].style.background = color;
       }
@@ -485,8 +523,15 @@
   });
   fi.addEventListener('change', () => fi.files[0] && pick(fi.files[0]));
 
-  function pick(f) {
+  function pick(f, sampleId = null) {
     file = f;
+    currentSample = sampleId;
+    updateSampleButtons();
+    // A new file/sample means any previous playback no longer applies —
+    // stop it and reset the play button so it doesn't show "pause" for
+    // audio that isn't actually playing.
+    playerEl.pause();
+    cpBtn.textContent = '▶';
     if (origSrc) URL.revokeObjectURL(origSrc);
     origSrc = URL.createObjectURL(f);
     simReady = false;
@@ -495,6 +540,26 @@
     setSimState('loading');
     scheduleSimulate(0);
   }
+
+  // ── Bundled sample clips (for visitors without an audio file on hand) ─────
+  function updateSampleButtons() {
+    document.querySelectorAll('.dz-sample-btn').forEach(b =>
+      b.classList.toggle('active', !!currentSample && b.dataset.sample === currentSample));
+  }
+
+  async function loadSample(path, name, id) {
+    document.getElementById('err').classList.remove('show');
+    try {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error('Could not load sample audio.');
+      const blob = await res.blob();
+      pick(new File([blob], name, { type: 'audio/mpeg' }), id);
+    } catch (e) {
+      document.getElementById('err').textContent = e.message || 'Could not load sample audio.';
+      document.getElementById('err').classList.add('show');
+    }
+  }
+  window.loadSample = loadSample;
 
   // ── A/B toggle ───────────────────────────────────────────────────────────
   const playerEl     = document.getElementById('player');
@@ -590,6 +655,7 @@
   async function doSimulate() {
     if (!file) return;
 
+    const isFirstResult = !_hasResult;
     const pos        = _hasResult ? playerEl.currentTime : 0;
     const wasPlaying = _hasResult && abMode === 'sim' && !playerEl.paused;
 
@@ -656,7 +722,15 @@
       setSimState('ready');
       setUpdating(false);
 
-      if (abMode === 'sim' || !_hasResult) {
+      if (isFirstResult) {
+        // Default to the unprocessed original so listeners have a baseline
+        // to compare against before choosing a CI experience.
+        abMode = 'original';
+        playerEl.src = origSrc;
+        playerEl.load();
+      } else if (abMode === 'sim') {
+        // Re-simulated because a setting changed while already listening to
+        // the simulation — reload with the updated audio at the same position.
         playerEl.src = simSrc;
         playerEl.load();
         if (wasPlaying) {
@@ -666,10 +740,9 @@
           }, { once: true });
         }
       }
-      abMode = 'sim';
-      document.getElementById('btnOrig').classList.remove('active');
-      document.getElementById('btnSim').classList.add('active');
-      buildCochlea(channels);
+      document.getElementById('btnOrig').classList.toggle('active', abMode === 'original');
+      document.getElementById('btnSim').classList.toggle('active', abMode === 'sim');
+      buildCochlea(abMode === 'original' ? null : channels);
       updateSettingsColor();
     } catch (e) {
       document.getElementById('err').textContent = e.message || String(e);
@@ -707,7 +780,7 @@
   const SVG_CX = 130, SVG_CY = 130, R_MAX = 105, R_MIN = 14;
   const THETA_MAX = 2.5 * 2 * Math.PI;
   const K_SP = Math.log(R_MAX / R_MIN) / THETA_MAX;
-  // F_LOW, F_HIGH, bandFreqs, bandColor, fmtHz, bandBinRange, bandEnergy imported from viz.js
+  // F_LOW, F_HIGH, bandFreqs, bandColor, fmtHz, bandBinRange, bandEnergy, litThreshold, ANALYSER_FFT_SIZE imported from viz.js
 
   function spiralPt(theta) {
     const r = R_MAX * Math.exp(-K_SP * theta);
@@ -821,7 +894,11 @@
         `<span class="caption-title"><strong>${cap.bold}</strong>: ${cap.rest}</span>${cap.body}`;
     }
 
-    if (!full && !playerEl.paused) startViz();
+    // Live viz works the same in full-range mode (48 reachable bands) as in
+    // a reduced CI view, so it should keep running whenever audio is
+    // actually playing — e.g. pre-selecting a strategy/channel count while
+    // still listening to the original shouldn't kill the animation.
+    if (!playerEl.paused) startViz();
   }
 
   // Initial render — full coverage (normal hearing), settings grayed until sim is ready
