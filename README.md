@@ -10,7 +10,7 @@ Cochlear implants work by mapping sound to a small number of electrode channels 
 
 ## About the name
 
-Koru is the spiral shape of an unfurling silver fern frond, a symbol in [Māori culture](https://en.wikipedia.org/wiki/Koru) (Aotearoa New Zealand) representing new life, growth, and change. It also happens to echo the spiral shape of the cochlea itself — fitting for a project about experiencing music through a new lens.
+[Koru](https://en.wikipedia.org/wiki/Koru) is the spiral shape of an unfurling silver fern frond, a symbol in Māori culture (Aotearoa New Zealand) representing new life, growth, and change. It also happens to echo the spiral shape of the cochlea itself — fitting for a project about experiencing music through a new lens.
 
 ## Background
 
@@ -100,6 +100,7 @@ ci_music/           Rust crate — CLI + native web server + WASM entry point
   planning/         Original design conversation
 web/                GitHub Pages UI (WASM build target)
   samples/          Bundled public-domain sample clips (see samples/README.md)
+  icons/            Favicon and social-preview (Open Graph) images
 sources/            Audiology literature referenced above
 ```
 
@@ -120,3 +121,7 @@ cargo clippy
 - **Live microphone input** via `cpal`, refactoring `vocoder::process()` into a streaming API with persistent filter state across chunks
 - **WASM AudioWorklet** for real-time in-browser processing with no server round-trip
 - Fold the hackathon slide deck's educational content (cochlea anatomy, sensorineural hearing loss, CI device mechanics) into the live web UI
+
+## License
+
+MIT — see [LICENSE](LICENSE). The bundled sample clips in `web/samples/` are separately licensed public-domain recordings; see [web/samples/README.md](web/samples/README.md).

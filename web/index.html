@@ -3,19 +3,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>As Heard Through a Cochlear Implant</title>
+  <title>Koru</title>
+  <script>
+    // Apply a saved theme override before first paint, so a stored preference
+    // that disagrees with the OS default doesn't flash the wrong theme.
+    (function () {
+      try {
+        var t = localStorage.getItem('koru-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+  <meta name="description" content="A channel vocoder that simulates how cochlear implant users perceive music. Upload an audio file — or try a sample — and hear it degraded the way a CI would process it, entirely in your browser.">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="As Heard Through a Cochlear Implant">
+  <meta property="og:description" content="A channel vocoder that simulates how cochlear implant users perceive music. Upload an audio file — or try a sample — and hear it degraded the way a CI would process it, entirely in your browser.">
+  <meta property="og:url" content="https://bekadavis9.github.io/koru/">
+  <meta property="og:image" content="https://bekadavis9.github.io/koru/icons/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="As Heard Through a Cochlear Implant">
+  <meta name="twitter:description" content="A channel vocoder that simulates how cochlear implant users perceive music. Upload an audio file — or try a sample — and hear it degraded the way a CI would process it, entirely in your browser.">
+  <meta name="twitter:image" content="https://bekadavis9.github.io/koru/icons/og-image.png">
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --border: #30363d;
+      --border-hover: #484f58;
+      --text: #e6edf3;
+      --text-secondary: #c9d1d9;
+      --text-muted: #8b949e;
+      --text-dim: #6e7681;
+      --text-faint: #484f58;
+
+      --accent: #58a6ff;
+      --accent-rgb: 88,166,255;
+      --accent-light: #79b8ff;
+      --accent-lighter: #a5c8ff;
+      --accent-fill: #1f4a8f;
+
+      --success: #3fb950;
+
+      --danger: #f85149;
+      --danger-rgb: 248,81,73;
+
+      --cis: #f0c844;
+      --cis-strong: #d29922;
+      --cis-rgb: 210,153,34;
+
+      --fs4: #a78bfa;
+      --fs4-strong: #8b5cf6;
+      --fs4-rgb: 139,92,246;
+
+      --muted-rgb: 139,148,158;
+      --overlay-rgb: 255,255,255;
+
+      --viz-track: #21262d;
+      --viz-unreachable: #2d3748;
+    }
+
+    /* Light palette — applied when the OS/browser prefers light and the user
+       hasn't explicitly forced dark via the toggle. */
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #ffffff;
+        --bg-card: #f6f8fa;
+        --border: #d0d7de;
+        --border-hover: #8c959f;
+        --text: #1f2328;
+        --text-secondary: #424a53;
+        --text-muted: #59636e;
+        --text-dim: #6e7781;
+        --text-faint: #8c959f;
+
+        --accent: #0969da;
+        --accent-rgb: 9,105,218;
+        --accent-light: #0550ae;
+        --accent-lighter: #033d8b;
+        --accent-fill: #ddf4ff;
+
+        --success: #1a7f37;
+
+        --danger: #cf222e;
+        --danger-rgb: 207,34,46;
+
+        --cis: #7d4e00;
+        --cis-strong: #9a6700;
+        --cis-rgb: 154,103,0;
+
+        --fs4: #6639ba;
+        --fs4-strong: #8250df;
+        --fs4-rgb: 130,80,223;
+
+        --muted-rgb: 100,110,120;
+        --overlay-rgb: 0,0,0;
+
+        --viz-track: #e8ebef;
+        --viz-unreachable: #d0d7de;
+      }
+    }
+
+    /* Same light palette, applied unconditionally when the toggle forces it
+       regardless of system preference. */
+    :root[data-theme="light"] {
+      --bg: #ffffff;
+      --bg-card: #f6f8fa;
+      --border: #d0d7de;
+      --border-hover: #8c959f;
+      --text: #1f2328;
+      --text-secondary: #424a53;
+      --text-muted: #59636e;
+      --text-dim: #6e7781;
+      --text-faint: #8c959f;
+
+      --accent: #0969da;
+      --accent-rgb: 9,105,218;
+      --accent-light: #0550ae;
+      --accent-lighter: #033d8b;
+      --accent-fill: #ddf4ff;
+
+      --success: #1a7f37;
+
+      --danger: #cf222e;
+      --danger-rgb: 207,34,46;
+
+      --cis: #7d4e00;
+      --cis-strong: #9a6700;
+      --cis-rgb: 154,103,0;
+
+      --fs4: #6639ba;
+      --fs4-strong: #8250df;
+      --fs4-rgb: 130,80,223;
+
+      --muted-rgb: 100,110,120;
+      --overlay-rgb: 0,0,0;
+
+      --viz-track: #e8ebef;
+      --viz-unreachable: #d0d7de;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       padding: 28px 20px 60px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      transition: background 0.15s, color 0.15s;
     }
 
     .container { width: 100%; max-width: 680px; }
@@ -23,23 +170,34 @@
     header { text-align: center; margin-bottom: 16px; }
     h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
 
+    /* ── Theme toggle ──────────────────────────────────────────────────── */
+    .theme-toggle {
+      position: fixed; top: 16px; right: 16px; z-index: 10;
+      width: 36px; height: 36px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text); font-size: 1.05rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .theme-toggle:hover { border-color: var(--border-hover); }
+
     /* Panel: connected card stack */
     .panel {
-      border: 1px solid #30363d;
+      border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
     }
     .card {
-      background: #161b22;
+      background: var(--bg-card);
       padding: 24px 28px;
-      border-bottom: 1px solid #30363d;
+      border-bottom: 1px solid var(--border);
     }
     .panel .card:last-child { border-bottom: none; }
     .section-label {
       font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.1em; color: #8b949e; margin-bottom: 14px;
+      letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 14px;
     }
-    .card-divider { height: 1px; background: #30363d; margin: 22px 0; }
+    .card-divider { height: 1px; background: var(--border); margin: 22px 0; }
 
     /* ── Cochlea explainer card ─────────────────────────────────────────── */
     .cochlea-card { text-align: center; }
@@ -47,16 +205,16 @@
     .freq-ticks { position: relative; height: 18px; margin-top: 10px; }
     .freq-tick-lbl {
       position: absolute; transform: translateX(-50%);
-      font-size: 0.62rem; color: #8b949e; white-space: nowrap; line-height: 18px;
+      font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; line-height: 18px;
     }
     .freq-bar {
       display: flex; height: 18px; border-radius: 4px; overflow: hidden;
-      gap: 2px; background: #30363d; margin-top: 4px;
+      gap: 2px; background: var(--border); margin-top: 4px;
     }
     .freq-bar-seg { flex: 1; transition: background 0.12s ease; }
     #cochleaSvg polyline { transition: stroke 0.12s ease; }
     .freq-bar-labels { display: flex; justify-content: space-between; margin-top: 6px; }
-    .freq-bar-labels span { font-size: 0.7rem; color: #8b949e; }
+    .freq-bar-labels span { font-size: 0.7rem; color: var(--text-muted); }
 
     /* Narrow viewports: 9 tick labels collide, so thin them to every other one. */
     @media (max-width: 500px) {
@@ -64,61 +222,61 @@
       .freq-tick-lbl:nth-child(even) { display: none; }
     }
     .cochlea-explainer {
-      font-size: 0.82rem; color: #8b949e; line-height: 1.6;
+      font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;
       max-width: 500px; margin: 0 auto 20px;
     }
     .cochlea-caption {
-      margin-top: 10px; font-size: 0.82rem; color: #8b949e;
+      margin-top: 10px; font-size: 0.82rem; color: var(--text-muted);
       line-height: 1.5;
     }
     .caption-title {
-      display: block; margin-bottom: 2px; color: #c9d1d9; font-size: 0.85rem;
+      display: block; margin-bottom: 2px; color: var(--text-secondary); font-size: 0.85rem;
     }
     .caption-title strong { font-weight: 600; }
 
     /* ── Drop zone ──────────────────────────────────────────────────────── */
     .drop-zone {
-      border: 2px dashed #30363d; border-radius: 8px;
+      border: 2px dashed var(--border); border-radius: 8px;
       padding: 20px; text-align: center; cursor: default;
       transition: border-color 0.15s, background 0.15s;
     }
     .drop-zone.dz-empty { cursor: pointer; }
-    .drop-zone.dz-empty:hover { border-color: #58a6ff; background: rgba(88,166,255,0.04); }
-    .drop-zone.over { border-color: #58a6ff; background: rgba(88,166,255,0.08); }
+    .drop-zone.dz-empty:hover { border-color: var(--accent); background: rgba(var(--accent-rgb),0.04); }
+    .drop-zone.over { border-color: var(--accent); background: rgba(var(--accent-rgb),0.08); }
     .dz-icon { font-size: 1.8rem; margin-bottom: 8px; }
-    .dz-hint { color: #8b949e; font-size: 0.85rem; }
+    .dz-hint { color: var(--text-muted); font-size: 0.85rem; }
     .dz-samples {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
       gap: 8px; margin-top: 14px; cursor: default;
     }
-    .dz-samples-label { color: #6e7681; font-size: 0.72rem; }
+    .dz-samples-label { color: var(--text-dim); font-size: 0.72rem; }
     .dz-sample-btn {
-      font-size: 0.75rem; color: #8b949e; background: none;
-      border: 1px solid #30363d; border-radius: 6px; padding: 4px 10px;
+      font-size: 0.75rem; color: var(--text-muted); background: none;
+      border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px;
       cursor: pointer; font-family: inherit; white-space: nowrap;
       transition: border-color 0.15s, color 0.15s;
     }
-    .dz-sample-btn em { font-style: normal; color: #6e7681; }
-    .dz-sample-btn:hover { border-color: #58a6ff; color: #e6edf3; }
+    .dz-sample-btn em { font-style: normal; color: var(--text-dim); }
+    .dz-sample-btn:hover { border-color: var(--accent); color: var(--text); }
     .dz-sample-btn.active {
-      border-color: #58a6ff; color: #79b8ff; background: rgba(88,166,255,0.08);
+      border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb),0.08);
     }
-    .dz-sample-btn.active em { color: #58a6ff; }
+    .dz-sample-btn.active em { color: var(--accent); }
     .dz-samples-compact { justify-content: flex-end; margin-top: 8px; }
     .dz-loading {
       display: none; align-items: center; justify-content: center;
-      gap: 12px; min-height: 60px; color: #8b949e; font-size: 0.88rem;
+      gap: 12px; min-height: 60px; color: var(--text-muted); font-size: 0.88rem;
     }
     .dz-actions {
       display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;
     }
     .dz-action-btn {
-      font-size: 0.72rem; color: #8b949e; background: none;
-      border: 1px solid #30363d; border-radius: 6px; padding: 3px 10px;
+      font-size: 0.72rem; color: var(--text-muted); background: none;
+      border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px;
       cursor: pointer; font-family: inherit; white-space: nowrap;
       transition: border-color 0.15s, color 0.15s;
     }
-    .dz-action-btn:hover { border-color: #8b949e; color: #e6edf3; }
+    .dz-action-btn:hover { border-color: var(--text-muted); color: var(--text); }
 
     /* ── Compact file row (replaces drop zone after pick) ────────────────── */
     .file-row { display: none; }
@@ -127,145 +285,145 @@
       margin-bottom: 12px;
     }
     .file-row-name {
-      font-weight: 600; font-size: 0.88rem; color: #3fb950;
+      font-weight: 600; font-size: 0.88rem; color: var(--success);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%;
     }
     .file-row-change {
-      font-size: 0.75rem; color: #8b949e; background: none;
-      border: 1px solid #30363d; border-radius: 6px; padding: 3px 10px;
+      font-size: 0.75rem; color: var(--text-muted); background: none;
+      border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px;
       cursor: pointer; font-family: inherit; white-space: nowrap;
       transition: border-color 0.15s, color 0.15s;
     }
-    .file-row-change:hover { border-color: #8b949e; color: #e6edf3; }
+    .file-row-change:hover { border-color: var(--text-muted); color: var(--text); }
     .file-row audio { width: 100%; }
 
     /* ── Strategy selector ──────────────────────────────────────────────── */
     .era-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .era-row {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 4px; padding: 16px 12px; background: #0d1117;
-      border: 1px solid #30363d; border-top: 3px solid transparent; border-radius: 8px;
-      color: #e6edf3; cursor: pointer; text-align: center;
+      gap: 4px; padding: 16px 12px; background: var(--bg);
+      border: 1px solid var(--border); border-top: 3px solid transparent; border-radius: 8px;
+      color: var(--text); cursor: pointer; text-align: center;
       transition: border-color 0.15s, background 0.15s;
     }
-    .era-row:hover:not(.active) { border-color: #484f58; border-top-color: #484f58; }
+    .era-row:hover:not(.active) { border-color: var(--border-hover); border-top-color: var(--border-hover); }
     .era-name { font-size: 0.93rem; font-weight: 700; }
-    .era-desc { font-size: 0.78rem; color: #8b949e; }
+    .era-desc { font-size: 0.78rem; color: var(--text-muted); }
     .era-row[data-strat="cis"].active {
-      background: rgba(210,153,34,0.07); border-color: rgba(210,153,34,0.3); border-top-color: #d29922;
+      background: rgba(var(--cis-rgb),0.07); border-color: rgba(var(--cis-rgb),0.3); border-top-color: var(--cis-strong);
     }
-    .era-row[data-strat="cis"].active .era-name { color: #f0c844; }
+    .era-row[data-strat="cis"].active .era-name { color: var(--cis); }
     .era-row[data-strat="fs4"].active {
-      background: rgba(139,92,246,0.07); border-color: rgba(139,92,246,0.3); border-top-color: #8b5cf6;
+      background: rgba(var(--fs4-rgb),0.07); border-color: rgba(var(--fs4-rgb),0.3); border-top-color: var(--fs4-strong);
     }
-    .era-row[data-strat="fs4"].active .era-name { color: #a78bfa; }
+    .era-row[data-strat="fs4"].active .era-name { color: var(--fs4); }
     .era-row[data-mode="sim"].active {
-      background: rgba(88,166,255,0.07); border-color: rgba(88,166,255,0.3); border-top-color: #58a6ff;
+      background: rgba(var(--accent-rgb),0.07); border-color: rgba(var(--accent-rgb),0.3); border-top-color: var(--accent);
     }
-    .era-row[data-mode="sim"].active .era-name { color: #79b8ff; }
+    .era-row[data-mode="sim"].active .era-name { color: var(--accent-light); }
     .era-row[data-mode="orig"].active {
-      background: rgba(88,166,255,0.07); border-color: rgba(88,166,255,0.3); border-top-color: #58a6ff;
+      background: rgba(var(--accent-rgb),0.07); border-color: rgba(var(--accent-rgb),0.3); border-top-color: var(--accent);
     }
-    .era-row[data-mode="orig"].active .era-name { color: #79b8ff; }
+    .era-row[data-mode="orig"].active .era-name { color: var(--accent-light); }
 
     /* ── Channel selector ───────────────────────────────────────────────── */
     .ch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 480px; margin: 0 auto; }
     .ch-btn {
-      background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
-      color: #e6edf3; cursor: pointer; padding: 14px 8px; text-align: center;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); cursor: pointer; padding: 14px 8px; text-align: center;
       transition: all 0.15s;
     }
-    .ch-btn:hover:not(.active) { border-color: #8b949e; }
-    .ch-btn.active { background: #1f4a8f; border-color: #58a6ff; }
+    .ch-btn:hover:not(.active) { border-color: var(--text-muted); }
+    .ch-btn.active { background: var(--accent-fill); border-color: var(--accent); }
     .ch-num   { display: block; font-size: 1.35rem; font-weight: 700; line-height: 1; }
-    .ch-label { display: block; font-size: 0.68rem; color: #8b949e; margin-top: 5px; }
-    .ch-btn.active .ch-label { color: #a5c8ff; }
+    .ch-label { display: block; font-size: 0.68rem; color: var(--text-muted); margin-top: 5px; }
+    .ch-btn.active .ch-label { color: var(--accent-lighter); }
     /* Channel active color follows selected strategy */
     #settingsCard[data-strat="cis"] .ch-btn.active {
-      background: rgba(210,153,34,0.1); border-color: rgba(210,153,34,0.6);
+      background: rgba(var(--cis-rgb),0.1); border-color: rgba(var(--cis-rgb),0.6);
     }
-    #settingsCard[data-strat="cis"] .ch-btn.active .ch-num  { color: #f0c844; }
-    #settingsCard[data-strat="cis"] .ch-btn.active .ch-label { color: #d29922; }
+    #settingsCard[data-strat="cis"] .ch-btn.active .ch-num  { color: var(--cis); }
+    #settingsCard[data-strat="cis"] .ch-btn.active .ch-label { color: var(--cis-strong); }
     #settingsCard[data-strat="fs4"] .ch-btn.active {
-      background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.6);
+      background: rgba(var(--fs4-rgb),0.1); border-color: rgba(var(--fs4-rgb),0.6);
     }
-    #settingsCard[data-strat="fs4"] .ch-btn.active .ch-num  { color: #a78bfa; }
-    #settingsCard[data-strat="fs4"] .ch-btn.active .ch-label { color: #8b5cf6; }
+    #settingsCard[data-strat="fs4"] .ch-btn.active .ch-num  { color: var(--fs4); }
+    #settingsCard[data-strat="fs4"] .ch-btn.active .ch-label { color: var(--fs4-strong); }
 
     /* ── A/B toggle ─────────────────────────────────────────────────────── */
     .ab-toggle {
-      display: flex; border: 1px solid #30363d; border-radius: 8px;
+      display: flex; border: 1px solid var(--border); border-radius: 8px;
       overflow: hidden; margin-bottom: 16px;
     }
     .ab-btn {
       flex: 1; padding: 10px 8px; text-align: center;
       font-size: 0.82rem; font-weight: 600; letter-spacing: 0.02em;
-      cursor: pointer; background: none; color: #8b949e;
+      cursor: pointer; background: none; color: var(--text-muted);
       border: none; font-family: inherit;
       transition: background 0.15s, color 0.15s;
     }
-    .ab-btn + .ab-btn { border-left: 1px solid #30363d; }
-    .ab-btn.ab-active { background: #1f4a8f; color: #e6edf3; }
-    .ab-btn:hover:not(.ab-active) { background: rgba(255,255,255,0.04); color: #c9d1d9; }
+    .ab-btn + .ab-btn { border-left: 1px solid var(--border); }
+    .ab-btn.ab-active { background: var(--accent-fill); color: var(--text); }
+    .ab-btn:hover:not(.ab-active) { background: rgba(var(--overlay-rgb),0.04); color: var(--text-secondary); }
 
     /* ── Custom audio player bar ───────────────────────────────────────── */
     .custom-player {
       display: flex; align-items: center; gap: 10px; padding: 6px 0;
     }
     .cp-btn {
-      background: none; border: none; color: #e6edf3; cursor: pointer;
+      background: none; border: none; color: var(--text); cursor: pointer;
       font-size: 1rem; padding: 0; width: 20px; flex-shrink: 0; line-height: 1;
     }
     .cp-track {
-      position: relative; flex: 1; height: 4px; background: #30363d;
+      position: relative; flex: 1; height: 4px; background: var(--border);
       border-radius: 2px; cursor: pointer;
     }
     .cp-fill {
       position: absolute; left: 0; top: 0; height: 100%;
-      background: #58a6ff; border-radius: 2px; width: 0%;
+      background: var(--accent); border-radius: 2px; width: 0%;
       pointer-events: none;
     }
     .cp-time {
-      font-size: 0.75rem; color: #8b949e; white-space: nowrap; flex-shrink: 0;
+      font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0;
     }
 
     /* ── Download button (matches Change file style) ───────────────────── */
     .file-row-download {
-      font-size: 0.75rem; color: #8b949e; background: none;
-      border: 1px solid #30363d; border-radius: 6px; padding: 3px 10px;
+      font-size: 0.75rem; color: var(--text-muted); background: none;
+      border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px;
       cursor: pointer; font-family: inherit; white-space: nowrap;
       transition: border-color 0.15s, color 0.15s;
     }
-    .file-row-download:hover { border-color: #8b949e; color: #e6edf3; }
+    .file-row-download:hover { border-color: var(--text-muted); color: var(--text); }
 
     /* ── Audio mode: grey out settings when original is playing ─────────── */
     /* Use [data-strat] to beat the strategy-specific ch-btn rules above */
     #settingsCard.playing-original[data-strat] .ch-btn.active {
-      background: rgba(139,148,158,0.08); border-color: rgba(139,148,158,0.25);
+      background: rgba(var(--muted-rgb),0.08); border-color: rgba(var(--muted-rgb),0.25);
     }
-    #settingsCard.playing-original[data-strat] .ch-btn.active .ch-num  { color: #6e7681; }
-    #settingsCard.playing-original[data-strat] .ch-btn.active .ch-label { color: #6e7681; }
+    #settingsCard.playing-original[data-strat] .ch-btn.active .ch-num  { color: var(--text-dim); }
+    #settingsCard.playing-original[data-strat] .ch-btn.active .ch-label { color: var(--text-dim); }
     .playing-original .era-row[data-strat="cis"].active,
     .playing-original .era-row[data-strat="fs4"].active {
-      background: rgba(139,148,158,0.05);
-      border-color: rgba(139,148,158,0.2); border-top-color: rgba(139,148,158,0.35);
+      background: rgba(var(--muted-rgb),0.05);
+      border-color: rgba(var(--muted-rgb),0.2); border-top-color: rgba(var(--muted-rgb),0.35);
     }
-    .playing-original .era-row[data-strat].active .era-name { color: #6e7681; }
+    .playing-original .era-row[data-strat].active .era-name { color: var(--text-dim); }
 
     /* ── Sim card states ────────────────────────────────────────────────── */
     .sim-idle {
       display: flex; align-items: center; justify-content: center;
-      min-height: 52px; color: #484f58; font-size: 0.88rem;
+      min-height: 52px; color: var(--text-faint); font-size: 0.88rem;
     }
     .sim-loading {
       display: none; align-items: center; gap: 12px;
-      min-height: 52px; color: #8b949e; font-size: 0.88rem;
+      min-height: 52px; color: var(--text-muted); font-size: 0.88rem;
     }
     .sim-loading.show { display: flex; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .sim-spinner {
       width: 18px; height: 18px; flex-shrink: 0;
-      border: 2px solid #30363d; border-top-color: #58a6ff;
+      border: 2px solid var(--border); border-top-color: var(--accent);
       border-radius: 50%; animation: spin 0.7s linear infinite;
     }
     .sim-result { display: none; }
@@ -275,7 +433,7 @@
     .card.has-result { position: relative; overflow: hidden; }
     .card.has-result::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: #58a6ff;
+      background: var(--accent);
     }
 
     /* Subtle spinner next to label while re-processing */
@@ -283,19 +441,20 @@
       content: '';
       display: inline-block; vertical-align: middle;
       width: 10px; height: 10px; margin-left: 8px;
-      border: 1.5px solid #30363d; border-top-color: #58a6ff;
+      border: 1.5px solid var(--border); border-top-color: var(--accent);
       border-radius: 50%; animation: spin 0.7s linear infinite;
     }
 
     .error {
       margin-top: 12px; padding: 12px 16px; display: none;
-      background: rgba(248,81,73,0.1); border: 1px solid #f85149;
-      border-radius: 6px; color: #f85149; font-size: 0.88rem;
+      background: rgba(var(--danger-rgb),0.1); border: 1px solid var(--danger);
+      border-radius: 6px; color: var(--danger); font-size: 0.88rem;
     }
     .error.show { display: block; }
   </style>
 </head>
 <body>
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">🌙</button>
 <div class="container">
 
   <header>
@@ -420,6 +579,34 @@
   // interaction resumes it), so creating it at module scope is safe.
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+  // ── Theme toggle ──────────────────────────────────────────────────────────
+  const THEME_KEY = 'koru-theme';
+  const themeToggleBtn = document.getElementById('themeToggle');
+  const lightMedia = window.matchMedia('(prefers-color-scheme: light)');
+
+  function effectiveTheme() {
+    const override = document.documentElement.getAttribute('data-theme');
+    return override || (lightMedia.matches ? 'light' : 'dark');
+  }
+  function updateThemeToggleUI() {
+    const t = effectiveTheme();
+    themeToggleBtn.textContent = t === 'light' ? '🌙' : '☀️';
+    const label = t === 'light' ? 'Switch to dark theme' : 'Switch to light theme';
+    themeToggleBtn.setAttribute('aria-label', label);
+    themeToggleBtn.title = label;
+  }
+  themeToggleBtn.addEventListener('click', () => {
+    const next = effectiveTheme() === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem(THEME_KEY, next);
+    updateThemeToggleUI();
+  });
+  // Keep the icon in sync if the OS theme changes while no override is set.
+  lightMedia.addEventListener('change', () => {
+    if (!localStorage.getItem(THEME_KEY)) updateThemeToggleUI();
+  });
+  updateThemeToggleUI();
+
   // ── File save helper ─────────────────────────────────────────────────────
   async function saveFile(blob, suggestedName) {
     if (window.showSaveFilePicker) {
@@ -491,7 +678,7 @@
         const [lo, hi] = bandFreqs(i, n);
         const [loIdx, hiIdx] = bandBinRange(lo, hi, nyquist, freqData.length);
         const avg = bandEnergy(freqData, loIdx, hiIdx);
-        const color = avg > threshold ? bandColor(i, n) : '#2d3748';
+        const color = avg > threshold ? bandColor(i, n) : 'var(--viz-unreachable)';
         if (bandPolylines[i]) bandPolylines[i].style.stroke = color;
         if (bandBarSegs[i])   bandBarSegs[i].style.background = color;
       }
@@ -815,7 +1002,7 @@
     const bg = document.createElementNS(NS, 'polyline');
     bg.setAttribute('points', bgPts.join(' '));
     bg.setAttribute('fill', 'none');
-    bg.setAttribute('stroke', '#21262d');
+    bg.style.stroke = 'var(--viz-track)';
     bg.setAttribute('stroke-width', '20');
     bg.setAttribute('stroke-linecap', 'round');
     bg.setAttribute('stroke-linejoin', 'round');
@@ -836,7 +1023,7 @@
       pl.setAttribute('fill', 'none');
       const tMid = THETA_MAX * (drawN - 0.5 - i) / drawN;
       const reachable = full || tMid <= THETA_MAX * 0.625;
-      pl.style.stroke = reachable ? bandColor(i, drawN) : '#2d3748';
+      pl.style.stroke = reachable ? bandColor(i, drawN) : 'var(--viz-unreachable)';
       bandPolylines.push(pl); bandReachable.push(reachable);
       pl.setAttribute('stroke-width', '14');
       pl.setAttribute('stroke-linecap', 'round');
@@ -853,7 +1040,7 @@
     // Modiolus cap
     const modCap = document.createElementNS(NS, 'circle');
     modCap.setAttribute('cx', SVG_CX); modCap.setAttribute('cy', SVG_CY);
-    modCap.setAttribute('r', '11'); modCap.setAttribute('fill', '#0d1117');
+    modCap.setAttribute('r', '11'); modCap.style.fill = 'var(--bg)';
     svg.appendChild(modCap);
 
     // Frequency tick labels — always 8 divisions as a fixed reference
@@ -879,7 +1066,7 @@
       seg.className = 'freq-bar-seg';
       const tMidBar = THETA_MAX * (drawN - 0.5 - i) / drawN;
       const reachableBar = full || tMidBar <= THETA_MAX * 0.625;
-      seg.style.background = reachableBar ? bandColor(i, drawN) : '#2d3748';
+      seg.style.background = reachableBar ? bandColor(i, drawN) : 'var(--viz-unreachable)';
       bar.appendChild(seg);
       bandBarSegs.push(seg);
     }
